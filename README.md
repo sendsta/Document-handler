@@ -1,12 +1,47 @@
 # Tender Documents Handler MCP
 
-A Model Context Protocol (MCP) server for parsing, analyzing, importing, OCR processing, and managing tender documents for **tri-tender**.
+A **FastMCP 2.0** server for parsing, analyzing, importing, OCR processing, and managing tender documents for **tri-tender**.
 
-## Overview
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.0-blue)](https://gofastmcp.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-green)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-This MCP server provides comprehensive document handling capabilities to ensure that tender documents uploaded by users are accessible, readable, and usable for generating better tender responses. It integrates seamlessly with the tri-tender system to extract, analyze, and process tender documents in various formats.
+## 🚀 Quick Deploy to FastMCP Cloud
 
-## Features
+### Step 1: Fork/Clone this Repository
+
+```bash
+git clone https://github.com/your-username/tender-docs-mcp.git
+```
+
+### Step 2: Deploy to FastMCP Cloud
+
+1. Visit [fastmcp.cloud](https://fastmcp.cloud)
+2. Sign in with your GitHub account
+3. Create a new project from your repository
+4. Set entrypoint: `server.py:mcp`
+5. Click Deploy
+
+Your server will be available at:
+```
+https://your-project-name.fastmcp.app/mcp
+```
+
+### Step 3: Connect to Your MCP Client
+
+Add this to your Claude Desktop or Cursor configuration:
+
+```json
+{
+  "mcpServers": {
+    "tender-docs": {
+      "url": "https://your-project-name.fastmcp.app/mcp"
+    }
+  }
+}
+```
+
+## 📋 Features
 
 ### Document Parsing
 - **Multi-format support**: PDF, DOCX, DOC, TXT, HTML, RTF, ODT
@@ -19,7 +54,7 @@ This MCP server provides comprehensive document handling capabilities to ensure 
 - Support for PNG, JPG, JPEG, TIFF, BMP
 - Automatic detection of image-only PDFs
 
-### Document Analysis
+### Tender Document Analysis
 - **Section extraction**: Automatically identify document structure
 - **Requirements extraction**: Find mandatory and optional requirements
 - **Deadline detection**: Extract important dates and deadlines
@@ -28,347 +63,211 @@ This MCP server provides comprehensive document handling capabilities to ensure 
 - **Compliance items**: Extract checklist and compliance requirements
 
 ### Document Management
-- Import from URL or base64
+- Import from base64
 - Document validation
-- Format conversion
 - Content search
-- Document comparison
+- Structure analysis
 
-## Installation
+## 🔧 Available Tools
 
-### Using pip
+| Tool | Description |
+|------|-------------|
+| `parse_document` | Extract text from PDF, DOCX, TXT, HTML files |
+| `analyze_tender` | **Comprehensive tender analysis** - sections, requirements, deadlines, contacts, criteria |
+| `extract_metadata` | Get file info, page count, author, title, dates |
+| `extract_tables` | Extract structured tables from PDFs |
+| `extract_requirements` | Find mandatory/optional requirements with categorization |
+| `extract_sections` | Parse document structure and hierarchy |
+| `extract_deadlines` | Find important dates and submission deadlines |
+| `perform_ocr` | OCR for scanned documents and images |
+| `validate_document` | Check if document is readable and valid |
+| `search_document` | Search for text patterns within documents |
+| `get_document_structure` | Get table of contents and section hierarchy |
+| `list_documents` | List available documents |
+| `import_document` | Import from base64 |
 
-```bash
-pip install tender-docs-mcp
-```
+## 📚 Available Resources
 
-### With OCR support
+| Resource URI | Description |
+|-------------|-------------|
+| `tender://config/version` | Current server version |
+| `tender://config/supported-formats` | List of supported document formats |
+| `tender://config/requirement-categories` | Requirement classification categories |
+| `tender://uploads/{filename}` | Get info about uploaded documents |
 
-```bash
-pip install tender-docs-mcp[ocr]
-```
+## 💡 Available Prompts
 
-### Full installation with all features
+| Prompt | Description |
+|--------|-------------|
+| `analyze_tender_prompt` | Comprehensive tender analysis workflow |
+| `compare_requirements_prompt` | Compare requirements between two tenders |
+| `extract_compliance_checklist_prompt` | Generate compliance checklist from tender |
 
-```bash
-pip install tender-docs-mcp[full]
-```
+## 🖥️ Local Development
 
-### System Dependencies
-
-The MCP server requires the following system tools:
-
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install -y \
-    pandoc \
-    poppler-utils \
-    tesseract-ocr \
-    libreoffice
-
-# macOS
-brew install pandoc poppler tesseract libreoffice
-```
-
-## Usage
-
-### Running the MCP Server
+### Installation
 
 ```bash
-# Run directly
-python -m tender_docs_mcp
+# Clone the repository
+git clone https://github.com/your-username/tender-docs-mcp.git
+cd tender-docs-mcp
 
-# Or using the installed script
-tender-docs-mcp
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-### MCP Client Configuration
+### Running Locally
 
-Add to your MCP client configuration (e.g., Claude Desktop):
+```bash
+# Using FastMCP CLI
+fastmcp run server.py
+
+# Or directly with Python
+python server.py
+```
+
+### Testing with MCP Inspector
+
+```bash
+fastmcp dev server.py
+```
+
+This opens the MCP Inspector at `http://localhost:5173` where you can test all tools.
+
+### Claude Desktop Configuration (Local)
 
 ```json
 {
   "mcpServers": {
     "tender-docs": {
       "command": "python",
-      "args": ["-m", "tender_docs_mcp"],
-      "env": {
-        "TENDER_UPLOAD_DIR": "/path/to/uploads",
-        "TENDER_PROCESSED_DIR": "/path/to/processed",
-        "TENDER_CACHE_DIR": "/path/to/cache"
+      "args": ["/path/to/tender-docs-mcp/server.py"]
+    }
+  }
+}
+```
+
+## 📊 Example Usage
+
+### Analyzing a Tender Document
+
+```python
+# The LLM will call the analyze_tender tool
+result = analyze_tender(file_path="/path/to/tender.pdf")
+
+# Returns:
+{
+    "document_id": "DOC-ABC12345",
+    "metadata": {
+        "file_name": "tender.pdf",
+        "page_count": 45,
+        "word_count": 12500
+    },
+    "sections": [
+        {"title": "Scope of Work", "content": "..."}
+    ],
+    "requirements": [
+        {
+            "requirement_id": "REQ-001",
+            "description": "Must have ISO certification",
+            "category": "qualification",
+            "is_mandatory": true
+        }
+    ],
+    "deadlines": [
+        {"date": "December 31, 2024", "type": "deadline"}
+    ],
+    "evaluation_criteria": [...],
+    "compliance_items": [...],
+    "summary": "This tender seeks proposals for..."
+}
+```
+
+### Using Prompts
+
+Ask Claude:
+> "Use the analyze_tender_prompt for /uploads/tender.pdf"
+
+Claude will receive a structured workflow prompt and execute the analysis step by step.
+
+## 🏗️ Project Structure
+
+```
+tender-docs-mcp/
+├── server.py              # Main FastMCP server (entrypoint)
+├── pyproject.toml         # Project configuration
+├── requirements.txt       # Dependencies
+├── README.md              # This file
+├── LICENSE                # MIT License
+└── .gitignore            # Git ignore rules
+```
+
+## ⚙️ Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TENDER_UPLOAD_DIR` | Directory for uploaded documents | System temp directory |
+| `TENDER_PROCESSED_DIR` | Directory for processed documents | System temp directory |
+| `TENDER_CACHE_DIR` | Cache directory | System temp directory |
+
+## 📦 Requirement Categories
+
+The MCP automatically categorizes extracted requirements:
+
+- **technical**: System, software, hardware specifications
+- **financial**: Pricing, payment, budget requirements
+- **legal**: Compliance, regulatory, contractual items
+- **qualification**: Experience, certifications, capacity
+- **timeline**: Deadlines, schedules, milestones
+- **documentation**: Reports, certificates, submissions
+- **personnel**: Staff, team, resource requirements
+- **general**: Other requirements
+
+## 🔐 Authentication (FastMCP Cloud)
+
+For private servers, add authentication headers:
+
+```json
+{
+  "mcpServers": {
+    "tender-docs": {
+      "url": "https://your-project.fastmcp.app/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
       }
     }
   }
 }
 ```
 
-### Using with stdio transport
+## 🤝 Integration with tri-tender
 
-```json
-{
-  "mcpServers": {
-    "tender-docs": {
-      "command": "tender-docs-mcp"
-    }
-  }
-}
-```
-
-## Available Tools
-
-### `parse_document`
-Parse and extract text content from a tender document.
-
-**Parameters:**
-- `file_path` (string, required): Path to the document file
-- `use_ocr` (boolean, optional): Force OCR processing
-
-**Returns:** Extracted text content with document type and length
-
----
-
-### `analyze_tender`
-Perform comprehensive analysis of a tender document.
-
-**Parameters:**
-- `file_path` (string, required): Path to the tender document
-
-**Returns:**
-- Document metadata
-- Extracted sections
-- Requirements (mandatory and optional)
-- Tables
-- Deadlines
-- Contact information
-- Evaluation criteria
-- Compliance items
-- Summary
-
----
-
-### `extract_metadata`
-Extract metadata from a document.
-
-**Parameters:**
-- `file_path` (string, required): Path to the document
-
-**Returns:** File info, page count, author, title, creation date, checksum
-
----
-
-### `extract_tables`
-Extract tables from a PDF document.
-
-**Parameters:**
-- `file_path` (string, required): Path to the PDF document
-
-**Returns:** Structured table data with headers and rows
-
----
-
-### `extract_requirements`
-Extract requirements from tender document text.
-
-**Parameters:**
-- `text` (string, required): Document text to analyze
-
-**Returns:** List of requirements with categories and mandatory flags
-
----
-
-### `extract_sections`
-Extract document sections based on headers and structure.
-
-**Parameters:**
-- `text` (string, required): Document text to analyze
-
-**Returns:** Hierarchical section structure
-
----
-
-### `extract_deadlines`
-Extract deadlines and important dates.
-
-**Parameters:**
-- `text` (string, required): Document text to analyze
-
-**Returns:** List of deadlines with context
-
----
-
-### `perform_ocr`
-Perform OCR on scanned documents or images.
-
-**Parameters:**
-- `file_path` (string, required): Path to the image or scanned PDF
-
-**Returns:** Extracted text from OCR processing
-
----
-
-### `convert_document`
-Convert a document to a different format.
-
-**Parameters:**
-- `file_path` (string, required): Path to source document
-- `output_format` (string, required): Target format (`pdf`, `txt`, `html`, `markdown`)
-- `output_path` (string, optional): Output file path
-
-**Returns:** Path to converted document
-
----
-
-### `validate_document`
-Validate that a document meets basic requirements.
-
-**Parameters:**
-- `file_path` (string, required): Path to the document
-
-**Returns:** Validation result with any issues found
-
----
-
-### `compare_documents`
-Compare two documents and identify differences.
-
-**Parameters:**
-- `file_path_1` (string, required): Path to first document
-- `file_path_2` (string, required): Path to second document
-
-**Returns:** Comparison results with differences
-
----
-
-### `search_document`
-Search for text or patterns within a document.
-
-**Parameters:**
-- `file_path` (string, required): Path to the document
-- `query` (string, required): Search query
-- `case_sensitive` (boolean, optional): Case-sensitive search
-
-**Returns:** Matches with surrounding context
-
----
-
-### `get_document_structure`
-Get the hierarchical structure of a document.
-
-**Parameters:**
-- `file_path` (string, required): Path to the document
-
-**Returns:** Table of contents and section hierarchy
-
----
-
-### `list_uploaded_documents`
-List all documents available for processing.
-
-**Parameters:**
-- `directory` (string, optional): Directory to list from
-
-**Returns:** List of documents with metadata
-
----
-
-### `import_document`
-Import a document from URL or base64.
-
-**Parameters:**
-- `source` (string, required): URL or base64-encoded content
-- `filename` (string, required): Name to save the file as
-- `source_type` (string, required): `url` or `base64`
-
-**Returns:** Path to imported document
-
-## Example Usage
-
-### Analyzing a Tender Document
-
-```python
-# Using the MCP client
-result = await client.call_tool("analyze_tender", {
-    "file_path": "/path/to/tender.pdf"
-})
-
-# Result contains:
-# - metadata: file info, page count, etc.
-# - sections: document structure
-# - requirements: extracted requirements
-# - deadlines: important dates
-# - evaluation_criteria: scoring criteria
-# - compliance_items: checklist items
-```
-
-### Extracting Requirements
-
-```python
-# First parse the document
-parse_result = await client.call_tool("parse_document", {
-    "file_path": "/path/to/tender.pdf"
-})
-
-# Then extract requirements
-requirements = await client.call_tool("extract_requirements", {
-    "text": parse_result["content"]
-})
-
-# Requirements are categorized and flagged as mandatory/optional
-for req in requirements["requirements"]:
-    print(f"[{req['category']}] {req['description']}")
-    print(f"  Mandatory: {req['is_mandatory']}")
-```
-
-### OCR Processing
-
-```python
-# Process a scanned document
-ocr_result = await client.call_tool("perform_ocr", {
-    "file_path": "/path/to/scanned_document.pdf"
-})
-
-print(ocr_result["ocr_text"])
-```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TENDER_UPLOAD_DIR` | Directory for uploaded documents | `/tmp/tender-uploads` |
-| `TENDER_PROCESSED_DIR` | Directory for processed documents | `/tmp/tender-processed` |
-| `TENDER_CACHE_DIR` | Cache directory | `/tmp/tender-cache` |
-
-## Integration with tri-tender
-
-This MCP server is designed to work seamlessly with the tri-tender document generation system:
+This MCP server integrates with the tri-tender document generation system:
 
 1. **Document Upload**: Users upload tender documents via tri-tender
 2. **Processing**: MCP server parses and analyzes the documents
-3. **Analysis**: Extracted data feeds into the tender response generator
+3. **Analysis**: Extracted data (requirements, deadlines, criteria) feeds into the tender response generator
 4. **Output**: Generated tender responses are based on comprehensive document analysis
 
-## Requirements Categories
+## 📄 License
 
-The MCP automatically categorizes extracted requirements:
+MIT License - see [LICENSE](LICENSE) file for details.
 
-- **Technical**: System, software, hardware specifications
-- **Financial**: Pricing, payment, budget requirements
-- **Legal**: Compliance, regulatory, contractual items
-- **Qualification**: Experience, certifications, capacity
-- **Timeline**: Deadlines, schedules, milestones
-- **Documentation**: Reports, certificates, submissions
-- **Personnel**: Staff, team, resource requirements
-- **General**: Other requirements
+## 🆘 Support
 
-## Contributing
+- **FastMCP Documentation**: [gofastmcp.com](https://gofastmcp.com)
+- **FastMCP Cloud**: [fastmcp.cloud](https://fastmcp.cloud)
+- **Discord**: [FastMCP Discord](https://discord.com/invite/aGsSC3yDF4)
+- **Issues**: GitHub Issues
 
-Contributions are welcome! Please read the contributing guidelines before submitting pull requests.
+## 🔄 CI/CD
 
-## License
-
-MIT License - see LICENSE file for details.
-
-## Support
-
-For issues and feature requests, please use the GitHub issue tracker.
+FastMCP Cloud automatically:
+- Monitors your repo for changes
+- Deploys on push to `main` branch
+- Creates preview deployments for PRs
+- Provides unique URLs for testing

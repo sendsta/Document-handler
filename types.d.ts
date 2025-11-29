@@ -4,34 +4,34 @@
  * 
  * Type definitions for integrating the Tender Documents Handler MCP
  * with tri-tender and other TypeScript/JavaScript applications.
+ * 
+ * Compatible with FastMCP Cloud deployment.
  */
 
 // ============================================================================
 // Enums
 // ============================================================================
 
-export enum DocumentType {
-  PDF = 'pdf',
-  DOCX = 'docx',
-  DOC = 'doc',
-  TXT = 'txt',
-  HTML = 'html',
-  RTF = 'rtf',
-  ODT = 'odt',
-  IMAGE = 'image',
-  UNKNOWN = 'unknown',
-}
+export type DocumentType = 
+  | 'pdf' 
+  | 'docx' 
+  | 'doc' 
+  | 'txt' 
+  | 'html' 
+  | 'rtf' 
+  | 'odt' 
+  | 'image' 
+  | 'unknown';
 
-export enum RequirementCategory {
-  TECHNICAL = 'technical',
-  FINANCIAL = 'financial',
-  LEGAL = 'legal',
-  QUALIFICATION = 'qualification',
-  TIMELINE = 'timeline',
-  DOCUMENTATION = 'documentation',
-  PERSONNEL = 'personnel',
-  GENERAL = 'general',
-}
+export type RequirementCategory = 
+  | 'technical'
+  | 'financial'
+  | 'legal'
+  | 'qualification'
+  | 'timeline'
+  | 'documentation'
+  | 'personnel'
+  | 'general';
 
 // ============================================================================
 // Core Interfaces
@@ -153,19 +153,8 @@ export interface PerformOCRInput {
   file_path: string;
 }
 
-export interface ConvertDocumentInput {
-  file_path: string;
-  output_format: 'pdf' | 'txt' | 'html' | 'markdown';
-  output_path?: string;
-}
-
 export interface ValidateDocumentInput {
   file_path: string;
-}
-
-export interface CompareDocumentsInput {
-  file_path_1: string;
-  file_path_2: string;
 }
 
 export interface SearchDocumentInput {
@@ -178,14 +167,14 @@ export interface GetDocumentStructureInput {
   file_path: string;
 }
 
-export interface ListUploadedDocumentsInput {
+export interface ListDocumentsInput {
   directory?: string;
 }
 
 export interface ImportDocumentInput {
   source: string;
   filename: string;
-  source_type: 'url' | 'base64';
+  source_type: 'base64';
 }
 
 // ============================================================================
@@ -196,6 +185,7 @@ export interface ParseDocumentResult {
   file_path: string;
   document_type: DocumentType;
   text_length: number;
+  word_count: number;
   content: string;
 }
 
@@ -207,6 +197,7 @@ export interface ExtractTablesResult {
 export interface ExtractRequirementsResult {
   requirements: TenderRequirement[];
   count: number;
+  mandatory_count: number;
 }
 
 export interface ExtractSectionsResult {
@@ -223,13 +214,7 @@ export interface PerformOCRResult {
   file_path: string;
   ocr_text: string;
   text_length: number;
-}
-
-export interface ConvertDocumentResult {
-  success: boolean;
-  input_path: string;
-  output_path: string;
-  format: string;
+  word_count: number;
 }
 
 export interface ValidateDocumentResult {
@@ -241,26 +226,6 @@ export interface ValidateDocumentResult {
   document_type?: DocumentType;
   word_count?: number;
   issues: string[];
-}
-
-export interface CompareDocumentsResult {
-  document_1: {
-    path: string;
-    word_count: number;
-    sections_count: number;
-    requirements_count: number;
-  };
-  document_2: {
-    path: string;
-    word_count: number;
-    sections_count: number;
-    requirements_count: number;
-  };
-  differences: {
-    word_count_diff: number;
-    sections_diff: number;
-    requirements_diff: number;
-  };
 }
 
 export interface SearchMatch {
@@ -296,7 +261,7 @@ export interface UploadedDocument {
   modified: string;
 }
 
-export interface ListUploadedDocumentsResult {
+export interface ListDocumentsResult {
   directory: string;
   documents: UploadedDocument[];
   count: number;
@@ -309,7 +274,22 @@ export interface ImportDocumentResult {
 }
 
 // ============================================================================
-// MCP Tool Definitions
+// Resource Types
+// ============================================================================
+
+export interface SupportedFormats {
+  documents: string[];
+  images: string[];
+  ocr_supported: boolean;
+}
+
+export interface RequirementCategoryInfo {
+  id: RequirementCategory;
+  description: string;
+}
+
+// ============================================================================
+// MCP Tool Names
 // ============================================================================
 
 export type TenderDocsTool =
@@ -321,13 +301,30 @@ export type TenderDocsTool =
   | 'extract_sections'
   | 'extract_deadlines'
   | 'perform_ocr'
-  | 'convert_document'
   | 'validate_document'
-  | 'compare_documents'
   | 'search_document'
   | 'get_document_structure'
-  | 'list_uploaded_documents'
+  | 'list_documents'
   | 'import_document';
+
+// ============================================================================
+// MCP Resource URIs
+// ============================================================================
+
+export type TenderDocsResource =
+  | 'tender://config/version'
+  | 'tender://config/supported-formats'
+  | 'tender://config/requirement-categories'
+  | `tender://uploads/${string}`;
+
+// ============================================================================
+// MCP Prompt Names
+// ============================================================================
+
+export type TenderDocsPrompt =
+  | 'analyze_tender_prompt'
+  | 'compare_requirements_prompt'
+  | 'extract_compliance_checklist_prompt';
 
 // ============================================================================
 // Utility Types
@@ -340,30 +337,48 @@ export interface MCPError {
 export type MCPResult<T> = T | MCPError;
 
 export function isError(result: MCPResult<any>): result is MCPError {
-  return 'error' in result;
+  return result && typeof result === 'object' && 'error' in result;
 }
 
 // ============================================================================
-// Integration Helper
+// FastMCP Cloud Configuration
 // ============================================================================
+
+export interface FastMCPCloudConfig {
+  url: string;
+  headers?: {
+    Authorization?: string;
+    [key: string]: string | undefined;
+  };
+}
+
+export interface MCPClientConfig {
+  mcpServers: {
+    'tender-docs': FastMCPCloudConfig;
+  };
+}
 
 /**
- * Helper class for working with the Tender Documents MCP from tri-tender
+ * Example configuration for Claude Desktop or Cursor
  */
-export interface TenderDocsMCPClient {
-  parseDocument(input: ParseDocumentInput): Promise<MCPResult<ParseDocumentResult>>;
-  analyzeTender(input: AnalyzeTenderInput): Promise<MCPResult<AnalysisResult>>;
-  extractMetadata(input: ExtractMetadataInput): Promise<MCPResult<DocumentMetadata>>;
-  extractTables(input: ExtractTablesInput): Promise<MCPResult<ExtractTablesResult>>;
-  extractRequirements(input: ExtractRequirementsInput): Promise<MCPResult<ExtractRequirementsResult>>;
-  extractSections(input: ExtractSectionsInput): Promise<MCPResult<ExtractSectionsResult>>;
-  extractDeadlines(input: ExtractDeadlinesInput): Promise<MCPResult<ExtractDeadlinesResult>>;
-  performOCR(input: PerformOCRInput): Promise<MCPResult<PerformOCRResult>>;
-  convertDocument(input: ConvertDocumentInput): Promise<MCPResult<ConvertDocumentResult>>;
-  validateDocument(input: ValidateDocumentInput): Promise<MCPResult<ValidateDocumentResult>>;
-  compareDocuments(input: CompareDocumentsInput): Promise<MCPResult<CompareDocumentsResult>>;
-  searchDocument(input: SearchDocumentInput): Promise<MCPResult<SearchDocumentResult>>;
-  getDocumentStructure(input: GetDocumentStructureInput): Promise<MCPResult<DocumentStructure>>;
-  listUploadedDocuments(input?: ListUploadedDocumentsInput): Promise<MCPResult<ListUploadedDocumentsResult>>;
-  importDocument(input: ImportDocumentInput): Promise<MCPResult<ImportDocumentResult>>;
-}
+export const exampleConfig: MCPClientConfig = {
+  mcpServers: {
+    'tender-docs': {
+      url: 'https://your-project-name.fastmcp.app/mcp'
+    }
+  }
+};
+
+/**
+ * Example configuration with authentication
+ */
+export const exampleAuthConfig: MCPClientConfig = {
+  mcpServers: {
+    'tender-docs': {
+      url: 'https://your-project-name.fastmcp.app/mcp',
+      headers: {
+        Authorization: 'Bearer YOUR_TOKEN'
+      }
+    }
+  }
+};

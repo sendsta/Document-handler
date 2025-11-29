@@ -1,5 +1,9 @@
-# Core dependencies
-mcp>=1.0.0
+# FastMCP Cloud Dependencies
+# ==========================
+# These dependencies are automatically detected by FastMCP Cloud
+
+# Core FastMCP
+fastmcp>=2.0.0
 
 # PDF processing
 pypdf>=4.0.0
@@ -10,12 +14,7 @@ python-docx>=1.0.0
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
 
-# OCR dependencies (optional)
+# OCR dependencies (optional - requires system packages)
 pytesseract>=0.3.10
 pdf2image>=1.16.0
 Pillow>=10.0.0
-
-# Additional utilities
-reportlab>=4.0.0
-pandas>=2.0.0
-openpyxl>=3.1.0
