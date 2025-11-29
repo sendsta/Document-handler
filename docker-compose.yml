@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  tender-docs-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tender-docs-mcp:latest
+    container_name: tender-docs-mcp
+    
+    # Mount volumes for document storage
+    volumes:
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+      - ./cache:/app/cache
+    
+    # Environment variables
+    environment:
+      - TENDER_UPLOAD_DIR=/app/uploads
+      - TENDER_PROCESSED_DIR=/app/processed
+      - TENDER_CACHE_DIR=/app/cache
+    
+    # For stdio transport, use stdin_open and tty
+    stdin_open: true
+    tty: true
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Development service with hot reload
+  tender-docs-mcp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tender-docs-mcp:dev
+    container_name: tender-docs-mcp-dev
+    
+    volumes:
+      - ./:/app/src
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+      - ./cache:/app/cache
+    
+    environment:
+      - TENDER_UPLOAD_DIR=/app/uploads
+      - TENDER_PROCESSED_DIR=/app/processed
+      - TENDER_CACHE_DIR=/app/cache
+      - PYTHONPATH=/app/src
+    
+    working_dir: /app/src
+    
+    command: python -m tender_docs_mcp
+    
+    stdin_open: true
+    tty: true
+    
+    profiles:
+      - dev
+
+volumes:
+  uploads:
+  processed:
+  cache:
